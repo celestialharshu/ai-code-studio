@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+
+   The entire theme lives in these two blocks. Change a value here and it
+   changes everywhere — Tailwind classes, the chat panel, and the Monaco editor
+   (see src/theme/monacoThemes.js, which reuses the same hex values).
+
+   Values are space-separated RGB channels rather than hex so Tailwind can add
+   opacity: bg-accent/10 becomes rgb(245 158 11 / 0.1).
+
+   Palette: warm stone neutrals + a single amber accent. Flat fills and hairline
+   borders only — no gradients anywhere in this app.
+--------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light; /* makes native widgets (select, scrollbars) match */
+
+  --bg: 250 250 249;        /* editor + page background */
+  --surface: 255 255 255;   /* panels: top bar, chat, status bar */
+  --elevated: 245 245 244;  /* inputs, hover states, code block headers */
+  --border: 231 229 228;
+  --text: 28 25 23;
+  --muted: 120 113 108;
+  --danger: 190 18 60;
+
+  --accent: 217 119 6;      /* amber 600 */
+  --accent-fg: 28 25 23;    /* dark text on amber — 5.4:1, passes AA */
+  --accent-text: 180 83 9;  /* amber 700 — accent as text on light bg, 4.8:1 */
+}
+
+.dark {
+  color-scheme: dark;
+
+  --bg: 12 10 9;
+  --surface: 28 25 23;
+  --elevated: 41 37 36;
+  --border: 41 37 36;
+  --text: 250 250 249;
+  --muted: 168 162 158;
+  --danger: 251 113 133;
+
+  --accent: 245 158 11;     /* amber 500 */
+  --accent-fg: 28 25 23;    /* still dark text on amber — 8:1 */
+  --accent-text: 251 191 36;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg font-sans text-text antialiased;
+  }
+
+  ::selection {
+    @apply bg-accent/25;
+  }
+
+  /* Keyboard focus stays visible everywhere. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/60;
+  }
+}
+
+@layer utilities {
+  /* Slim scrollbars that follow the theme instead of the OS. */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+
+  /* The block cursor that trails the model while it's typing. */
+  .caret {
+    animation: caret 1s step-end infinite;
+  }
+}
+
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
