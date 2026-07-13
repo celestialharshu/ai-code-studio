@@ -10,6 +10,7 @@ import { connectDatabase } from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
 import roomRoutes from './routes/room.routes.js';
 import aiRoutes from './routes/ai.routes.js';
+import runRoutes from './routes/run.routes.js';
 import { attachCollab } from './collab/socket.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
@@ -29,6 +30,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/run', runRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -46,5 +48,5 @@ await connectDatabase();
 server.listen(config.port, () => {
   console.log(`[server] http://localhost:${config.port}`);
   console.log(`[server] model: ${config.groqModel}`);
-  console.log('[server] auth + private rooms: ready');
+  console.log('[server] auth + private rooms + code execution: ready');
 });

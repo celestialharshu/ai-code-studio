@@ -32,8 +32,9 @@ export const config = {
     .map((origin) => origin.trim())
     .filter(Boolean),
 
+  // Separate budgets: a burst of Run clicks shouldn't eat the AI chat's quota.
   rateLimit: {
-    windowMs: 60_000,
-    max: Number(process.env.RATE_LIMIT_MAX) || 20,
+    ai: { max: Number(process.env.RATE_LIMIT_MAX) || 20, windowMs: 60_000 },
+    run: { max: Number(process.env.RUN_RATE_LIMIT_MAX) || 15, windowMs: 60_000 },
   },
 };
