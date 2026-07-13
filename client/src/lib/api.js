@@ -110,3 +110,8 @@ export async function streamChat({ messages, code, language, onToken, signal }) 
     }
   }
 }
+
+// ------------------------------------------------------------ code execution
+
+export const runCode = ({ language, code, stdin }) =>
+  request('/api/run', { method: 'POST', body: { language, code, stdin } });

@@ -4,16 +4,17 @@ import TopBar from './components/layout/TopBar.jsx';
 import RoomBar from './components/layout/RoomBar.jsx';
 import StatusBar from './components/layout/StatusBar.jsx';
 import SplitPane from './components/layout/SplitPane.jsx';
-import CodeEditor from './components/editor/CodeEditor.jsx';
+import EditorPane from './components/editor/EditorPane.jsx';
 import ChatPanel from './components/chat/ChatPanel.jsx';
 import RoomSettings from './components/rooms/RoomSettings.jsx';
 
 import { useAuth } from './auth/AuthProvider.jsx';
 import { useChat } from './hooks/useChat.js';
 import { useCollab } from './hooks/useCollab.js';
+import { useRunner } from './hooks/useRunner.js';
 import { createRoom, fetchRoom } from './lib/api.js';
 import { firstCodeBlock } from './lib/parseMessage.js';
-import { normalizeLanguage } from './lib/languages.js';
+import { STARTERS, normalizeLanguage } from './lib/languages.js';
 import { readRoomFromUrl, writeRoomToUrl } from './lib/room.js';
 
 /**
@@ -21,7 +22,8 @@ import { readRoomFromUrl, writeRoomToUrl } from './lib/room.js';
  *
  * It holds the wiring, not the document. The code itself lives in Monaco's model
  * — see CodeEditor for why. What lives here is everything *around* the code:
- * which language is selected, the conversation, and which room we're in.
+ * which language is selected, the conversation, the run output, and which room
+ * we're in.
  */
 export default function Workspace() {
   const { user } = useAuth();
@@ -118,10 +120,33 @@ export default function Workspace() {
     [editor, flashMessage],
   );
 
-  // ----------------------------------------------------------------- the chat
+  /**
+   * Switching language never touches code you've written — except when there's
+   * nothing to touch. An empty file gets a small runnable starter, so the Run
+   * button has something to do the moment you pick C++.
+   */
+  const changeLanguage = useCallback(
+    (next) => {
+      setLanguage(next);
 
-  // Read at send time rather than passed as a prop, so the model always sees the
-  // file exactly as it is right now.
+      if (!editor || editor.getValue().trim() || !STARTERS[next]) return;
+
+      editor.executeEdits('starter', [
+        {
+          range: editor.getModel().getFullModelRange(),
+          text: STARTERS[next],
+          forceMoveMarkers: true,
+        },
+      ]);
+      editor.pushUndoStop();
+    },
+    [editor],
+  );
+
+  // ------------------------------------------------------- the chat + the run
+
+  // Read at call time rather than passed as a prop, so both the model and the
+  // compiler always see the file exactly as it is right now.
   const getEditorState = useCallback(
     () => ({ code: editor?.getValue() ?? '', language }),
     [editor, language],
@@ -138,6 +163,7 @@ export default function Workspace() {
   );
 
   const chat = useChat({ getEditorState, onReplyComplete: handleReplyComplete });
+  const runner = useRunner({ getEditorState });
 
   // ---------------------------------------------------------------- the rooms
 
@@ -190,11 +216,12 @@ export default function Workspace() {
       <main className="min-h-0 flex-1">
         <SplitPane
           left={
-            <CodeEditor
+            <EditorPane
               language={language}
-              onLanguageChange={setLanguage}
+              onLanguageChange={changeLanguage}
               onReady={onEditorReady}
               roomId={denied ? null : room?.id}
+              runner={runner}
             />
           }
           right={
